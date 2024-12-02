@@ -12,9 +12,6 @@ import schedule
 import time
 import os
 
-# List to store open orders
-OPEN_ORDERS = []
-
 def get_latest_bars(symbols, client):
     """
     Get the latest stock bars for the given symbols.
@@ -102,18 +99,18 @@ def enter_opening_orders(positions, trading_client, market_data_client):
             orders.append((symbol, -shares))
     return orders
 
-def enter_closing_orders(opening_orders):
+def enter_closing_orders(trading_client):
     """
     Enter closing orders to close the positions.
-
-    Args:
-        opening_orders (list): List of opening orders.
     """
-    for symbol, shares in opening_orders:
+
+    positions = trading_client.get_all_positions()
+
+    for pos in positions:
         order_req = MarketOrderRequest(
-            symbol=symbol,
-            qty=-shares,
-            side=OrderSide.SELL if shares > 0 else OrderSide.BUY,
+            symbol=pos.symbol,
+            qty=abs(float(pos.qty)),
+            side=OrderSide.SELL if pos.side == 'long' else OrderSide.BUY,
             time_in_force=TimeInForce.CLS
         )
         trading_client.submit_order(order_data=order_req)
@@ -126,9 +123,9 @@ def schedule_open(trading_client, market_data_client):
         trading_client (TradingClient): Alpaca trading client.
         market_data_client (StockHistoricalDataClient): Alpaca data client.
     """
-    global OPEN_ORDERS
     pos = generate_positions(market_data_client)
-    OPEN_ORDERS = enter_opening_orders(pos, trading_client, market_data_client)
+    orders = enter_opening_orders(pos, trading_client, market_data_client)
+    print(orders)
 
 def schedule_close(trading_client):
     """
@@ -137,7 +134,7 @@ def schedule_close(trading_client):
     Args:
         trading_client (TradingClient): Alpaca trading client.
     """
-    enter_closing_orders(OPEN_ORDERS)
+    enter_closing_orders(trading_client)
 
 
 if __name__ == '__main__':
@@ -149,8 +146,8 @@ if __name__ == '__main__':
     trading_client = TradingClient(api_key, api_secret, paper=True)
 
     # Schedule opening and closing of positions
-    schedule.every().day.at('07:00', 'America/Chicago').do(schedule_open, trading_client, market_data_client)
-    schedule.every().day.at('09:00', 'America/Chicago').do(schedule_close, trading_client, market_data_client)
+    schedule.every().day.at('08:00', 'America/Chicago').do(schedule_open, trading_client, market_data_client)
+    schedule.every().day.at('09:00', 'America/Chicago').do(schedule_close, trading_client)
 
     # Run scheduled tasks
     while True:
