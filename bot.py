@@ -9,6 +9,7 @@ from alpaca.data.timeframe import TimeFrame
 from datetime import datetime, timedelta
 import numpy as np
 import schedule
+import time
 import os
 
 OPEN_ORDERS = []
@@ -97,3 +98,7 @@ if __name__ == '__main__':
 
     schedule.every().day.at('07:00', 'America/Chicago').do(schedule_open, trading_client, market_data_client)
     schedule.every().day.at('09:00', 'America/Chicago').do(schedule_close, trading_client, market_data_client)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
