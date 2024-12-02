@@ -6,6 +6,12 @@ import requests
 import os
 
 def get_nasdaq_100_constituents():
+    """
+    Fetch the list of NASDAQ-100 constituents from the NASDAQ API.
+
+    Returns:
+        list: A list of NASDAQ-100 stock symbols.
+    """
     url = 'https://api.nasdaq.com/api/quote/list-type/nasdaq100'
 
     # Need browser-like headers to get a response. Nasdaq API blocks bots
@@ -28,6 +34,16 @@ def get_nasdaq_100_constituents():
 
 # Function to get the last year's stock bars for given symbols
 def get_last_year_bars(symbols, client):
+    """
+    Get the last year's stock bars for given symbols.
+
+    Args:
+        symbols (list): List of stock symbols.
+        client (StockHistoricalDataClient): Alpaca historical data client.
+
+    Returns:
+        DataFrame: DataFrame containing the stock bars data.
+    """
     now = datetime.now().date()
     request_params = StockBarsRequest(
         symbol_or_symbols=symbols,
@@ -38,8 +54,9 @@ def get_last_year_bars(symbols, client):
     return client.get_stock_bars(request_params).df
 
 if __name__ == '__main__':
-    api_key = os.getenv('ALPACA_API_KEY')  # Get Alpaca API key from environment variable
-    api_secret = os.getenv('ALPACA_API_SECRET')  # Get Alpaca API secret from environment variable
+    # Get Alpaca API key and secret from environment variables
+    api_key = os.getenv('ALPACA_API_KEY')
+    api_secret = os.getenv('ALPACA_API_SECRET')
 
     # Create a client for Alpaca's historical data API
     client = StockHistoricalDataClient(api_key, api_secret)
